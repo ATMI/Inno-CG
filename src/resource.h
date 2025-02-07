@@ -137,7 +137,12 @@ namespace cg
 
 	struct vertex
 	{
-		// TODO Lab: 1.03 Implement `cg::vertex` struct
+		float3 position;
+		float3 normal;
+		float2 texture;
+		float3 ambient;
+		float3 diffuse;
+		float3 emissive;
 	};
 
 }// namespace cg
