@@ -4,9 +4,10 @@
 
 #include <functional>
 #include <iostream>
-#include <linalg.h>
 #include <limits>
+#include <linalg.h>
 #include <memory>
+#include <utility>
 
 
 using namespace linalg::aliases;
@@ -19,8 +20,8 @@ namespace cg::renderer
 	class rasterizer
 	{
 	public:
-		rasterizer(){};
-		~rasterizer(){};
+		rasterizer() {};
+		~rasterizer() {};
 		void set_render_target(
 				std::shared_ptr<resource<RT>> in_render_target,
 				std::shared_ptr<resource<float>> in_depth_buffer = nullptr);
@@ -55,22 +56,29 @@ namespace cg::renderer
 			std::shared_ptr<resource<RT>> in_render_target,
 			std::shared_ptr<resource<float>> in_depth_buffer)
 	{
-		// TODO Lab: 1.02 Implement `set_render_target`, `set_viewport`, `clear_render_target` methods of `cg::renderer::rasterizer` class
+		render_target = in_render_target;
+		depth_buffer = std::move(in_depth_buffer);
 		// TODO Lab: 1.06 Adjust `set_render_target`, and `clear_render_target` methods of `cg::renderer::rasterizer` class to consume a depth buffer
 	}
 
 	template<typename VB, typename RT>
 	inline void rasterizer<VB, RT>::set_viewport(size_t in_width, size_t in_height)
 	{
-		// TODO Lab: 1.02 Implement `set_render_target`, `set_viewport`, `clear_render_target` methods of `cg::renderer::rasterizer` class
+		width = in_width;
+		height = in_height;
 	}
 
 	template<typename VB, typename RT>
 	inline void rasterizer<VB, RT>::clear_render_target(
 			const RT& in_clear_value, const float in_depth)
 	{
-		// TODO Lab: 1.02 Implement `set_render_target`, `set_viewport`, `clear_render_target` methods of `cg::renderer::rasterizer` class
-		// TODO Lab: 1.06 Adjust `set_render_target`, and `clear_render_target` methods of `cg::renderer::rasterizer` class to consume a depth buffer
+		if (!render_target) {
+			return;
+		}
+
+		for (size_t i = 0; i < render_target->count(); ++i) {
+			render_target->item(i) = in_clear_value;
+		}
 	}
 
 	template<typename VB, typename RT>
@@ -84,7 +92,7 @@ namespace cg::renderer
 	inline void rasterizer<VB, RT>::set_index_buffer(
 			std::shared_ptr<resource<unsigned int>> in_index_buffer)
 	{
-		index_buffer = in_index_buffer;
+		index_buffer = std::move(in_index_buffer);
 	}
 
 	template<typename VB, typename RT>
