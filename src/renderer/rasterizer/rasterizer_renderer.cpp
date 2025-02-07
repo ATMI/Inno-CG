@@ -55,13 +55,15 @@ void cg::renderer::rasterization_renderer::render()
 		return std::make_pair(transformed, vertex_data);
 	};
 
-	auto start = std::chrono::high_resolution_clock ::now();
-	rasterizer->clear_render_target({0, 255, 255});
-	auto end = std::chrono::high_resolution_clock ::now();
-	auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-	std::cout << double(time.count()) / 1000.0 << " ms" << std::endl;
+	rasterizer->pixel_shader = [](cg::vertex vertex_data, float z) {
+		return cg::color::from_float3(vertex_data.ambient);
+	};
 
-	// TODO Lab: 1.05 Implement `pixel_shader` lambda for the instance of `cg::renderer::rasterizer`
+//	auto start = std::chrono::high_resolution_clock ::now();
+//	rasterizer->clear_render_target({0, 255, 255});
+//	auto end = std::chrono::high_resolution_clock ::now();
+//	auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+//	std::cout << double(time.count()) / 1000.0 << " ms" << std::endl;
 
 	for (size_t shape_id = 0; shape_id < model->get_index_buffers().size(); ++shape_id) {
 		rasterizer->set_vertex_buffer(model->get_vertex_buffers()[shape_id]);
