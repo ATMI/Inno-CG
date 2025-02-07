@@ -6,10 +6,11 @@
 void cg::renderer::rasterization_renderer::init()
 {
 	render_target = std::make_shared<cg::resource<cg::unsigned_color>>(settings->width, settings->height);
+	depth_buffer = std::make_shared<cg::resource<float>>(settings->width, settings->height);
 	rasterizer = std::make_shared<cg::renderer::rasterizer<cg::vertex, cg::unsigned_color>>();
 
 	rasterizer->set_viewport(settings->width, settings->height);
-	rasterizer->set_render_target(render_target);
+	rasterizer->set_render_target(render_target, depth_buffer);
 
 	model = std::make_shared<cg::world::model>();
 	model->load_obj(settings->model_path);
@@ -40,9 +41,8 @@ void cg::renderer::rasterization_renderer::init()
 	camera->set_angle_of_view(settings->camera_angle_of_view);
 	camera->set_z_near(settings->camera_z_near);
 	camera->set_z_far(settings->camera_z_far);
-
-	// TODO Lab: 1.06 Add depth buffer in `cg::renderer::rasterization_renderer`
 }
+
 void cg::renderer::rasterization_renderer::render()
 {
 	float4x4 matrix = mul(
@@ -59,11 +59,11 @@ void cg::renderer::rasterization_renderer::render()
 		return cg::color::from_float3(vertex_data.ambient);
 	};
 
-//	auto start = std::chrono::high_resolution_clock ::now();
-//	rasterizer->clear_render_target({0, 255, 255});
-//	auto end = std::chrono::high_resolution_clock ::now();
-//	auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-//	std::cout << double(time.count()) / 1000.0 << " ms" << std::endl;
+	auto start = std::chrono::high_resolution_clock ::now();
+	rasterizer->clear_render_target({0, 0, 0});
+	auto end = std::chrono::high_resolution_clock ::now();
+	auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+	std::cout << "Clearing: " << double(time.count()) / 1000.0 << " ms" << std::endl;
 
 	for (size_t shape_id = 0; shape_id < model->get_index_buffers().size(); ++shape_id) {
 		rasterizer->set_vertex_buffer(model->get_vertex_buffers()[shape_id]);

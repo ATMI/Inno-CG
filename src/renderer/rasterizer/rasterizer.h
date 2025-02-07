@@ -57,8 +57,7 @@ namespace cg::renderer
 			std::shared_ptr<resource<float>> in_depth_buffer)
 	{
 		render_target = in_render_target;
-		depth_buffer = std::move(in_depth_buffer);
-		// TODO Lab: 1.06 Adjust `set_render_target`, and `clear_render_target` methods of `cg::renderer::rasterizer` class to consume a depth buffer
+		depth_buffer = in_depth_buffer;
 	}
 
 	template<typename VB, typename RT>
@@ -69,15 +68,18 @@ namespace cg::renderer
 	}
 
 	template<typename VB, typename RT>
-	inline void rasterizer<VB, RT>::clear_render_target(
-			const RT& in_clear_value, const float in_depth)
+	inline void rasterizer<VB, RT>::clear_render_target(const RT& in_clear_value, const float in_depth)
 	{
-		if (!render_target) {
-			return;
+		if (render_target) {
+			for (size_t i = 0; i < render_target->count(); ++i) {
+				render_target->item(i) = in_clear_value;
+			}
 		}
 
-		for (size_t i = 0; i < render_target->count(); ++i) {
-			render_target->item(i) = in_clear_value;
+		if (depth_buffer) {
+			for (size_t i = 0; i < depth_buffer->count(); ++i) {
+				depth_buffer->item(i) = in_depth;
+			}
 		}
 	}
 
@@ -127,6 +129,8 @@ namespace cg::renderer
 			int2 begin = clamp(min_vertex, min_viewport, max_viewport);
 			int2 end = clamp(max_vertex, min_viewport, max_viewport);
 
+			auto edge = float(edge_function(vertex_a, vertex_b, vertex_c));
+
 			for (int x = begin.x; x <= end.x; ++x) {
 				for (int y = begin.y; y < end.y; ++y) {
 					int2 point{x, y};
@@ -135,14 +139,21 @@ namespace cg::renderer
 					int edge2 = edge_function(vertex_c, vertex_a, point);
 
 					if (0 <= edge0 && 0 <= edge1 && 0 <= edge2) {
-						auto pixel_result = pixel_shader(vertices[0], 0.f);
-						render_target->item(x, y) = RT::from_color(pixel_result);
+						auto u = float(edge1) / edge;
+						auto v = float(edge2) / edge;
+						auto w = float(edge0) / edge;
+
+						float depth = u * vertices[0].position.z + v * vertices[1].position.z + w * vertices[2].position.z;
+
+						if (depth_test(depth, x, y)) {
+							auto pixel_result = pixel_shader(vertices[0], depth);
+							render_target->item(x, y) = RT::from_color(pixel_result);
+							depth_buffer->item(x, y) = depth;
+						}
 					}
 				}
 			}
 		}
-
-		// TODO Lab: 1.06 Add `Depth test` stage to `draw` method of `cg::renderer::rasterizer`
 	}
 
 	template<typename VB, typename RT>
