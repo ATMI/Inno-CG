@@ -1,4 +1,5 @@
 #include "rasterizer_renderer.h"
+#include <gif.h>
 
 #include "utils/resource_utils.h"
 
@@ -45,11 +46,13 @@ void cg::renderer::rasterization_renderer::init()
 
 void cg::renderer::rasterization_renderer::render()
 {
+	float4x4 scale = linalg::scaling_matrix((float3) {1.1f, 1.1f, 1.1f});
 	float4x4 matrix = mul(
 			camera->get_projection_matrix(),
 			camera->get_view_matrix(),
 			model->get_world_matrix()
 	);
+
 	rasterizer->vertex_shader = [&](float4 vertex, cg::vertex vertex_data) {
 		float4 transformed = mul(matrix, vertex);
 		return std::make_pair(transformed, vertex_data);
@@ -59,19 +62,41 @@ void cg::renderer::rasterization_renderer::render()
 		return cg::color::from_float3(vertex_data.ambient);
 	};
 
-	auto start = std::chrono::high_resolution_clock ::now();
-	rasterizer->clear_render_target({0, 0, 0});
-	auto end = std::chrono::high_resolution_clock ::now();
-	auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-	std::cout << "Clearing: " << double(time.count()) / 1000.0 << " ms" << std::endl;
+	GifWriter gif;
+	size_t width = render_target->get_stride();
+	size_t height = render_target->count() / width;
+	GifBegin(&gif, "result.gif", width, height, 10);
 
-	for (size_t shape_id = 0; shape_id < model->get_index_buffers().size(); ++shape_id) {
-		rasterizer->set_vertex_buffer(model->get_vertex_buffers()[shape_id]);
-		rasterizer->set_index_buffer(model->get_index_buffers()[shape_id]);
-		rasterizer->draw(model->get_index_buffers()[shape_id]->count(), 0);
+	for (size_t i = 0; i < 25; ++i) {
+		auto start = std::chrono::high_resolution_clock ::now();
+		rasterizer->clear_render_target({0, 0, 0});
+		auto end = std::chrono::high_resolution_clock ::now();
+		auto time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+		std::cout << "Clearing: " << double(time.count()) / 1000.0 << " ms" << std::endl;
+
+		for (size_t shape_id = 0; shape_id < model->get_index_buffers().size(); ++shape_id) {
+			rasterizer->set_vertex_buffer(model->get_vertex_buffers()[shape_id]);
+			rasterizer->set_index_buffer(model->get_index_buffers()[shape_id]);
+			rasterizer->draw(model->get_index_buffers()[shape_id]->count(), 0);
+		}
+
+		matrix = linalg::mul(matrix, scale);
+
+		std::vector<uint8_t> rgba;
+		rgba.reserve(width * height * 4);
+
+		for (size_t j = 0; j < width * height; ++j) {
+			const auto& color = render_target->get_data()[j];
+			rgba.emplace_back(color.r);
+			rgba.emplace_back(color.g);
+			rgba.emplace_back(color.b);
+			rgba.emplace_back(255);
+		}
+
+		GifWriteFrame(&gif, rgba.data(), width, height, 10);
 	}
 
-	cg::utils::save_resource(*render_target, settings->result_path);
+	GifEnd(&gif);
 }
 
 void cg::renderer::rasterization_renderer::destroy() {}

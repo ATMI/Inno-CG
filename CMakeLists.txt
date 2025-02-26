@@ -7,6 +7,7 @@ project("Computer graphics in Game development")
 
 set(INCLUDE
         libs/stb
+        libs/gif-h
         libs/tinyobjloader
         libs/linalg
         libs/cxxopts/include
