@@ -1,3 +1,6 @@
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 #include <gif.h>
 
@@ -81,7 +84,7 @@ void cg::renderer::rasterization_renderer::render()
 			rasterizer->draw(model->get_index_buffers()[shape_id]->count(), 0);
 		}
 
-		float angle = 2 * M_PIf / (float) frames;
+		float angle = 2 * (float) M_PI / (float) frames;
 		matrix = linalg::mul(
 				matrix,
 				linalg::rotation_matrix(linalg::rotation_quat(float3{0, 1, 0}, angle))
