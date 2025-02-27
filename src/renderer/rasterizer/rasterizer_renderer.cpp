@@ -1,6 +1,7 @@
-#include "rasterizer_renderer.h"
+#include <cmath>
 #include <gif.h>
 
+#include "rasterizer_renderer.h"
 #include "utils/resource_utils.h"
 
 
