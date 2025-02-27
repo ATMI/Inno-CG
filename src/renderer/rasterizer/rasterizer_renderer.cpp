@@ -105,6 +105,7 @@ void cg::renderer::rasterization_renderer::render()
 	}
 
 	GifEnd(&gif);
+	cg::utils::save_resource(*render_target, settings->result_path);
 }
 
 void cg::renderer::rasterization_renderer::destroy() {}
