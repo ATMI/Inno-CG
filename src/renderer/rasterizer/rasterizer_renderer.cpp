@@ -46,7 +46,6 @@ void cg::renderer::rasterization_renderer::init()
 
 void cg::renderer::rasterization_renderer::render()
 {
-	float4x4 scale = linalg::scaling_matrix((float3) {1.1f, 1.1f, 1.1f});
 	float4x4 matrix = mul(
 			camera->get_projection_matrix(),
 			camera->get_view_matrix(),
@@ -67,7 +66,8 @@ void cg::renderer::rasterization_renderer::render()
 	size_t height = render_target->count() / width;
 	GifBegin(&gif, "result.gif", width, height, 10);
 
-	for (size_t i = 0; i < 25; ++i) {
+	size_t frames = 50;
+	for (size_t i = 0; i < frames; ++i) {
 		auto start = std::chrono::high_resolution_clock ::now();
 		rasterizer->clear_render_target({0, 0, 0});
 		auto end = std::chrono::high_resolution_clock ::now();
@@ -80,7 +80,11 @@ void cg::renderer::rasterization_renderer::render()
 			rasterizer->draw(model->get_index_buffers()[shape_id]->count(), 0);
 		}
 
-		matrix = linalg::mul(matrix, scale);
+		float angle = 2 * M_PIf / (float) frames;
+		matrix = linalg::mul(
+				matrix,
+				linalg::rotation_matrix(linalg::rotation_quat(float3{0, 1, 0}, angle))
+		);
 
 		std::vector<uint8_t> rgba;
 		rgba.reserve(width * height * 4);
