@@ -178,15 +178,18 @@ namespace cg::renderer
 			const auto& vertex_buffer = vertex_buffers[shape_id];
 
 			size_t index_id = 0;
+			aabb<VB> aabb;
+
 			while (index_id < index_buffer->count()) {
 				triangle<VB> triangle(
 						vertex_buffer->item(index_buffer->item(index_id++)),
 						vertex_buffer->item(index_buffer->item(index_id++)),
 						vertex_buffer->item(index_buffer->item(index_id++)));
-				triangles.push_back(triangle);
+				aabb.add_triangle(triangle);
 			}
+
+			acceleration_structures.push_back(aabb);
 		}
-		// TODO Lab: 2.05 Implement `build_acceleration_structure` method of `raytracer` class
 	}
 
 	template<typename VB, typename RT>
@@ -224,14 +227,20 @@ namespace cg::renderer
 		closest_hit_payload.t = max_t;
 		const triangle<VB>* closest_triangle = nullptr;
 
-		for (const auto& triangle: triangles) {
-			payload payload = intersection_shader(triangle, ray);
-			if (payload.t > min_t && payload.t < closest_hit_payload.t) {
-				closest_hit_payload = payload;
-				closest_triangle = &triangle;
+		for (const auto& aabb: acceleration_structures) {
+			if (!aabb.aabb_test(ray)) {
+				continue;
+			}
 
-				if (any_hit_shader) {
-					return any_hit_shader(ray, payload, triangle);
+			for (const auto& triangle: aabb.get_triangles()) {
+				payload payload = intersection_shader(triangle, ray);
+				if (payload.t > min_t && payload.t < closest_hit_payload.t) {
+					closest_hit_payload = payload;
+					closest_triangle = &triangle;
+
+					if (any_hit_shader) {
+						return any_hit_shader(ray, payload, triangle);
+					}
 				}
 			}
 		}
@@ -242,7 +251,6 @@ namespace cg::renderer
 			}
 		}
 
-		// TODO Lab: 2.05 Adjust `trace_ray` method of `raytracer` class to traverse the acceleration structure
 		return miss_shader(ray);
 	}
 
@@ -288,19 +296,38 @@ namespace cg::renderer
 	template<typename VB>
 	inline void aabb<VB>::add_triangle(const triangle<VB> triangle)
 	{
-		// TODO Lab: 2.05 Implement `aabb` class
+		if (triangles.empty()) {
+			aabb_max = aabb_min = triangle.a;
+		}
+
+		aabb_max = max(aabb_max, triangle.a);
+		aabb_max = max(aabb_max, triangle.b);
+		aabb_max = max(aabb_max, triangle.c);
+
+		aabb_min = min(aabb_min, triangle.a);
+		aabb_min = min(aabb_min, triangle.b);
+		aabb_min = min(aabb_min, triangle.c);
+
+		triangles.push_back(triangle);
 	}
 
 	template<typename VB>
 	inline const std::vector<triangle<VB>>& aabb<VB>::get_triangles() const
 	{
-		// TODO Lab: 2.05 Implement `aabb` class
+		return triangles;
 	}
 
 	template<typename VB>
 	inline bool aabb<VB>::aabb_test(const ray& ray) const
 	{
-		// TODO Lab: 2.05 Implement `aabb` class
+		float3 inv_ray_direction = float3(1.0f) / ray.direction;
+		float3 t0 = (aabb_min - ray.position) * inv_ray_direction;
+		float3 t1 = (aabb_max - ray.position) * inv_ray_direction;
+
+		float3 t_max = max(t0, t1);
+		float3 t_min = min(t0, t1);
+
+		return maxelem(t_min) <= minelem(t_max);
 	}
 
 }// namespace cg::renderer
