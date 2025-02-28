@@ -34,7 +34,10 @@ void cg::renderer::ray_tracing_renderer::init()
 
 	lights.push_back({float3{0.0f, 1.58f, -0.03f},
 					  float3{0.78f, 0.78f, 0.78f}});
-	// TODO Lab: 2.04 Initialize `shadow_raytracer` in `ray_tracing_renderer`
+
+	shadow_raytracer = std::make_shared<cg::renderer::raytracer<cg::vertex, cg::unsigned_color>>();
+	shadow_raytracer->set_index_buffers(model->get_index_buffers());
+	shadow_raytracer->set_vertex_buffers(model->get_vertex_buffers());
 }
 
 void cg::renderer::ray_tracing_renderer::destroy() {}
@@ -43,11 +46,17 @@ void cg::renderer::ray_tracing_renderer::update() {}
 
 void cg::renderer::ray_tracing_renderer::render()
 {
+	shadow_raytracer->miss_shader = [](const ray& ray) {
+		return payload{.t = -1.0f};
+	};
+	shadow_raytracer->any_hit_shader = [](const ray& ray, payload& payload, const triangle<cg::vertex>& triangle) {
+		return payload;
+	};
+	shadow_raytracer->build_acceleration_structure();
+
 	raytracer->clear_render_target({0, 0, 0});
 	raytracer->miss_shader = [](const ray& ray) {
-		payload payload{
-				.color = {0.0f, 0.0f, (ray.direction.y + 1.0f) / 2.0f}};
-		return payload;
+		return payload{.color = {0.0f, 0.0f, (ray.direction.y + 1.0f) / 2.0f}};
 	};
 	raytracer->closest_hit_shader = [&](const ray& ray, payload& payload, const triangle<cg::vertex>& triangle, size_t depth) {
 		float3 position = ray.position + ray.direction * payload.t;
@@ -57,9 +66,12 @@ void cg::renderer::ray_tracing_renderer::render()
 				payload.bary.z * triangle.nc);
 
 		float3 result_color = triangle.emissive;
-		for (const auto &light: lights) {
+		for (const auto& light: lights) {
 			cg::renderer::ray to_light(position, light.position - position);
-			result_color += triangle.diffuse * light.color * std::max(dot(normal, to_light.direction), 0.0f);
+			auto shadow = shadow_raytracer->trace_ray(to_light, 1, length(light.position - position));
+			if (shadow.t < 0.0f) {
+				result_color += triangle.diffuse * light.color * std::max(dot(normal, to_light.direction), 0.0f);
+			}
 		}
 
 		payload.color = cg::color::from_float3(result_color);
@@ -81,9 +93,6 @@ void cg::renderer::ray_tracing_renderer::render()
 
 	cg::utils::save_resource(*render_target, settings->result_path);
 
-	// TODO Lab: 2.03 Adjust `closest_hit_shader` of `raytracer` to implement Lambertian shading model
-	// TODO Lab: 2.04 Define `any_hit_shader` and `miss_shader` for `shadow_raytracer`
-	// TODO Lab: 2.04 Adjust `closest_hit_shader` of `raytracer` to cast shadows rays and to ignore occluded lights
 	// TODO Lab: 2.05 Adjust `ray_tracing_renderer` class to build the acceleration structure
 	// TODO Lab: 2.06 (Bonus) Adjust `closest_hit_shader` for Monte-Carlo light tracing
 }
