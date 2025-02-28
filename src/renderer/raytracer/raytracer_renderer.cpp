@@ -48,9 +48,13 @@ void cg::renderer::ray_tracing_renderer::render()
 				.color = {0.0f, 0.0f, (ray.direction.y + 1.0f) / 2.0f}};
 		return payload;
 	};
+	raytracer->closest_hit_shader = [](const ray& ray, payload& payload, const triangle<cg::vertex>& triangle, size_t depth) {
+		payload.color = cg::color::from_float3(triangle.diffuse);
+		return payload;
+	};
+	raytracer->build_acceleration_structure();
 
 	auto start = std::chrono::high_resolution_clock::now();
-
 	raytracer->ray_generation(
 			camera->get_position(),
 			camera->get_direction(),
@@ -58,14 +62,12 @@ void cg::renderer::ray_tracing_renderer::render()
 			camera->get_up(),
 			settings->raytracing_depth,
 			settings->accumulation_num);
-
-	auto stop = std::chrono::high_resolution_clock ::now();
+	auto stop = std::chrono::high_resolution_clock::now();
 	auto time = std::chrono::duration<float, std::milli>(stop - start);
 	std::cout << "Raytacing took " << time.count() << " ms" << std::endl;
 
 	cg::utils::save_resource(*render_target, settings->result_path);
 
-	// TODO Lab: 2.02 Add `closest_hit_shader` to `raytracer` class to return diffuse color
 	// TODO Lab: 2.03 Adjust `closest_hit_shader` of `raytracer` to implement Lambertian shading model
 	// TODO Lab: 2.04 Define `any_hit_shader` and `miss_shader` for `shadow_raytracer`
 	// TODO Lab: 2.04 Adjust `closest_hit_shader` of `raytracer` to cast shadows rays and to ignore occluded lights
