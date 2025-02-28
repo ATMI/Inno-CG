@@ -145,7 +145,7 @@ namespace cg::renderer
 	{
 		height = in_height;
 		width = in_width;
-		// TODO Lab: 2.06 Add `history` resource in `raytracer` class
+		history = std::make_shared<cg::resource<float3>>(width, height);
 	}
 
 	template<typename VB, typename RT>
@@ -154,8 +154,8 @@ namespace cg::renderer
 	{
 		for (size_t i = 0; i < render_target->count(); ++i) {
 			render_target->item(i) = in_clear_value;
+			history->item(i) = float3{0.0f, 0.0f, 0.0f};
 		}
-		// TODO Lab: 2.06 Add `history` resource in `raytracer` class
 	}
 
 	template<typename VB, typename RT>
@@ -197,21 +197,31 @@ namespace cg::renderer
 			float3 position, float3 direction,
 			float3 right, float3 up, size_t depth, size_t accumulation_num)
 	{
+		float frame_weight = 1.0f / float(accumulation_num);
+		for (int frame_id = 0; frame_id < accumulation_num; ++frame_id) {
+			std::cout << "Tracing frame #" << frame_id + 1 << std::endl;
+			float2 jitter = get_jitter(frame_id);
 #pragma omp parallel for
-		for (int x = 0; x < width; ++x) {
-			for (int y = 0; y < height; ++y) {
-				float u = (2.0f * float(x)) / float(width - 1) - 1.0f;
-				float v = (2.0f * float(y)) / float(height - 1) - 1.0f;
-				u *= float(width) / float(height);
+			for (int x = 0; x < width; ++x) {
+				for (int y = 0; y < height; ++y) {
+					float u = (2.0f * float(x) + jitter.x) / float(width - 1) - 1.0f;
+					float v = (2.0f * float(y) + jitter.y) / float(height - 1) - 1.0f;
+					u *= float(width) / float(height);
 
-				float3 ray_direction = direction + u * right - v * up;
-				ray ray(position, ray_direction);
+					float3 ray_direction = direction + u * right - v * up;
+					ray ray(position, ray_direction);
 
-				payload payload = trace_ray(ray, depth);
-				render_target->item(x, y) = RT::from_color(payload.color);
+					payload payload = trace_ray(ray, depth);
+
+					auto& history_pixel = history->item(x, y);
+					history_pixel += sqrt(payload.color.to_float3() * frame_weight);
+
+					if (frame_id == accumulation_num - 1) {
+						render_target->item(x, y) = RT::from_float3(history_pixel);
+					}
+				}
 			}
 		}
-		// TODO Lab: 2.06 Implement TAA in `ray_generation` method of `raytracer` class
 	}
 
 	template<typename VB, typename RT>
@@ -289,7 +299,31 @@ namespace cg::renderer
 	template<typename VB, typename RT>
 	float2 raytracer<VB, RT>::get_jitter(int frame_id)
 	{
-		// TODO Lab: 2.06 Implement `get_jitter` method of `raytracer` class
+		float2 results{0.0f, 0.0f};
+
+		constexpr int base_x = 2;
+		int index = frame_id + 1;
+		float inv_base = 1.0f / float(base_x);
+		float fraction = inv_base;
+
+		while (index > 0) {
+			results.x += float(index % base_x) * fraction;
+			index /= base_x;
+			fraction *= inv_base;
+		}
+
+		constexpr int base_y = 3;
+		index = frame_id + 1;
+		inv_base = 1.0f / float(base_y);
+		fraction = inv_base;
+
+		while (index > 0) {
+			results.y += float(index % base_y) * fraction;
+			index /= base_y;
+			fraction *= inv_base;
+		}
+
+		return results - 0.5f;
 	}
 
 
