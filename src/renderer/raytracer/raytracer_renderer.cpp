@@ -44,7 +44,9 @@ void cg::renderer::ray_tracing_renderer::render()
 {
 	raytracer->clear_render_target({0, 0, 0});
 	raytracer->miss_shader = [](const ray& ray) {
-		return payload{.color = {0.0f, 0.0f, 0.0f}};
+		payload payload{};
+		payload.color = {0.0f, 0.0f, 0.0f};
+		return payload;
 	};
 
 	std::random_device rd;
