@@ -232,7 +232,7 @@ D3D12_INDEX_BUFFER_VIEW cg::renderer::dx12_renderer::create_index_buffer_view(
 	const UINT index_buffer_size
 )
 {
-	D3D12_VERTEX_BUFFER_VIEW view = {};
+	D3D12_INDEX_BUFFER_VIEW view = {};
 	view.BufferLocation = index_buffer->GetGPUVirtualAddress();
 	view.SizeInBytes = index_buffer_size;
 	view.Format = DXGI_FORMAT_R32_UINT;
@@ -328,20 +328,18 @@ void cg::renderer::descriptor_heap::create_heap(ComPtr<ID3D12Device>& device, D3
 D3D12_CPU_DESCRIPTOR_HANDLE cg::renderer::descriptor_heap::get_cpu_descriptor_handle(UINT index) const
 {
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		heap->GetCPUDescriptorHandleForHeapStart(
-			INT(index),
-			descriptor_size
-		)
+		heap->GetCPUDescriptorHandleForHeapStart(),
+		INT(index),
+		descriptor_size
 	);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE cg::renderer::descriptor_heap::get_gpu_descriptor_handle(UINT index) const
 {
 	return D3D12_GPU_DESCRIPTOR_HANDLE(
-		heap->GetGPUDescriptorHandleForHeapStart(
-			INT(index),
-			descriptor_size
-		)
+		heap->GetGPUDescriptorHandleForHeapStart(),
+		INT(index),
+		descriptor_size
 	);
 }
 ID3D12DescriptorHeap* cg::renderer::descriptor_heap::get() const
