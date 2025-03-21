@@ -321,8 +321,8 @@ void cg::renderer::descriptor_heap::create_heap(ComPtr<ID3D12Device>& device, D3
 	desc.NumDescriptors = number;
 	desc.Type = type;
 
-	THROW_IF_FAILED(device->CreateDescriptorHeap(desc, IID_PPV_ARGS(&heap)));
-	descriptor_size = device->GetDescriptorHandleIncremetSize(type);
+	THROW_IF_FAILED(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap)));
+	descriptor_size = device->GetDescriptorHandleIncrementSize(type);
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE cg::renderer::descriptor_heap::get_cpu_descriptor_handle(UINT index) const
@@ -336,7 +336,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE cg::renderer::descriptor_heap::get_cpu_descriptor_ha
 
 D3D12_GPU_DESCRIPTOR_HANDLE cg::renderer::descriptor_heap::get_gpu_descriptor_handle(UINT index) const
 {
-	return D3D12_GPU_DESCRIPTOR_HANDLE(
+	return CD3DX12_GPU_DESCRIPTOR_HANDLE(
 		heap->GetGPUDescriptorHandleForHeapStart(),
 		INT(index),
 		descriptor_size
