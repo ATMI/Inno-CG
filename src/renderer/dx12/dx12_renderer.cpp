@@ -233,7 +233,7 @@ D3D12_INDEX_BUFFER_VIEW cg::renderer::dx12_renderer::create_index_buffer_view(
 )
 {
 	D3D12_VERTEX_BUFFER_VIEW view = {};
-	view.BufferLocation = vertex_buffer->GetGPUVirtualAddress();
+	view.BufferLocation = index_buffer->GetGPUVirtualAddress();
 	view.SizeInBytes = index_buffer_size;
 	view.Format = DXGI_FORMAT_R32_UINT;
 	return view;
