@@ -217,7 +217,7 @@ ComPtr<ID3DBlob> cg::renderer::dx12_renderer::compile_shader(const std::string& 
 	compile_flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
-	HRESULT res = D3DCompileFrom(
+	HRESULT res = D3DCompileFromFile(
 		get_shader_path().wstring().c_str(),
 		nullptr,
 		nullptr,
@@ -252,7 +252,7 @@ void cg::renderer::dx12_renderer::create_pso()
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
-	desc.InputLayout = { input_desc, _countof(input_descs) };
+	desc.InputLayout = { input_descs, _countof(input_descs) };
 	desc.pRootSignature = root_signature.Get();
 	desc.VS = CD3DX12_SHADER_BYTECODE(vertex_shader.Get());
 	desc.PS = CD3DX12_SHADER_BYTECODE(pixel_shader.Get());
@@ -263,7 +263,7 @@ void cg::renderer::dx12_renderer::create_pso()
 	desc.DepthStencilState.DepthEnable = FALSE;
 	desc.DepthStencilState.StencilEnable = FALSE;
 	desc.SampleMask = UINT_MAX;
-	desc.PrimitveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	desc.NumRenderTargets = 1;
 	desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	desc.SampleDesc.Count = 1;
