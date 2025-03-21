@@ -173,7 +173,7 @@ void cg::renderer::dx12_renderer::create_root_signature(
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE rs_feature_data = {};
 	rs_feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
 
-	if (FAILED(device->CheckFeatureSupport(D3D_FEATURE_ROOT_SIGNATURE, &rs_feature_data, sizeof(rs_feature_data)))) {
+	if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &rs_feature_data, sizeof(rs_feature_data)))) {
 		rs_feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
 
@@ -181,7 +181,7 @@ void cg::renderer::dx12_renderer::create_root_signature(
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rs_desc;
 	rs_desc.Init_1_1(_countof(root_parameters), root_parameters, num_sampler_descriptors, sampler_descriptors, rs_flags);
 
-	ComPtr<ID3DBLab> signature, error;
+	ComPtr<ID3DBlob> signature, error;
 	HRESULT res = D3DX12SerializeVersionedRootSignature(
 		&rs_desc,
 		rs_feature_data.HighestVersion,
