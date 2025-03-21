@@ -246,7 +246,7 @@ void cg::renderer::dx12_renderer::create_shader_resource_view(const ComPtr<ID3D1
 void cg::renderer::dx12_renderer::create_constant_buffer_view(const ComPtr<ID3D12Resource>& buffer, D3D12_CPU_DESCRIPTOR_HANDLE cpu_handler)
 {
 	D3D12_CONSTANT_BUFFER_VIEW_DESC desc = {};
-	desc.BufferLocaltion = buffer->GetGPUVirtualAddress();
+	desc.BufferLocation = buffer->GetGPUVirtualAddress();
 	desc.SizeInBytes = ((sizeof(cb) + 255) & ~255);
 	device->CreateConstantBufferView(&desc, cpu_handler);
 }
