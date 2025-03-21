@@ -144,7 +144,7 @@ void cg::renderer::dx12_renderer::create_command_allocators()
 	for (auto &command_allocator : command_allocators) {
 		THROW_IF_FAILED(device->CreateCommandAllocator(
 			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			ID_PPV_ARGS(&command_allocator)
+			IID_PPV_ARGS(&command_allocator)
 		))
 	}
 }
@@ -412,7 +412,7 @@ void cg::renderer::dx12_renderer::populate_command_list()
 	command_list->SetGraphicsRootSignature(root_signature.Get());
 	ID3D12DescriptorHeap *heaps[] = { cbv_srv_heap.get() };
 	command_list->SetDescriptorHeaps(_countof(heaps), heaps);
-	command_list->SetGraphicsRouteDescriptorTable(0, cbv_srv_heap.get_gpu_descriptor_handle(0));
+	command_list->SetGraphicsRootDescriptorTable(0, cbv_srv_heap.get_gpu_descriptor_handle(0));
 	command_list->RSSetViewports(1, &view_port);
 	command_list->RSSetScissorRects(1, &scissor_rect);
 	command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
