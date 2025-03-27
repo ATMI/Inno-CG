@@ -442,7 +442,7 @@ void cg::renderer::dx12_renderer::populate_command_list()
 	command_list->ResourceBarrier(_countof(begin_barriers), begin_barriers);
 
 	command_list->OMSetRenderTargets(1, &rtv_heap.get_cpu_descriptor_handle(frame_index), FALSE, nullptr);
-	const float clear_color[] = { 0.0f, 0.0f, 0.0f };
+	const float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	command_list->ClearRenderTargetView(rtv_heap.get_cpu_descriptor_handle(frame_index), clear_color, 0, nullptr);
 	
 	for (size_t s = 0; s < model->get_vertex_buffers().size(); ++s) {
@@ -493,6 +493,7 @@ void cg::renderer::descriptor_heap::create_heap(ComPtr<ID3D12Device>& device, D3
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = number;
 	desc.Type = type;
+	desc.Flags = flags;
 
 	THROW_IF_FAILED(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap)));
 	descriptor_size = device->GetDescriptorHandleIncrementSize(type);
