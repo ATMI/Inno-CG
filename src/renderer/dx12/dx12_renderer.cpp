@@ -44,7 +44,7 @@ void cg::renderer::dx12_renderer::init()
 	shadow_light->set_angle_of_view(settings->camera_angle_of_view);
 	shadow_light->set_z_near(settings->camera_z_near);
 	shadow_light->set_z_far(settings->camera_z_far);
-	cb.shadowMatrix = shadow_light->get_dxm_mvp_maxtrix();
+	cb.shadowMatrix = shadow_light->get_dxm_mvp_matrix();
 
 	view_port = CD3DX12_VIEWPORT(0.0f, 0.0f, float(settings->width), float(settings->height));
 	scissor_rect = CD3DX12_RECT(0, 0, long(settings->width), long(settings->height));
@@ -67,7 +67,7 @@ void cg::renderer::dx12_renderer::update()
 	current_time = now;
 
 	cb.mwpMatrix = camera->get_dxm_mvp_matrix();
-	cb.shadowMatrix = shadow_light->get_dxm_mvp.matrix();
+	cb.shadowMatrix = shadow_light->get_dxm_mvp_matrix();
 	memcpy(constant_buffer_data_begin, &cb, sizeof(cb));
 }
 
@@ -644,7 +644,7 @@ void cg::renderer::dx12_renderer::populate_command_list()
 	command_list->RSSetScissorRects(1, &scissor_rect);
 	command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	command_list->OMSetRenderTargets(0, nullptr, FALSE, &dvs_heap.get_cpu_descriptor_handle(1));
+	command_list->OMSetRenderTargets(0, nullptr, FALSE, &dsv_heap.get_cpu_descriptor_handle(1));
 	command_list->ClearDepthStencilView(dsv_heap.get_cpu_descriptor_handle(1), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	for (size_t s = 0; s < model->get_vertex_buffers().size(); ++s) {
