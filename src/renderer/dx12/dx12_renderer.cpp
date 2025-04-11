@@ -697,7 +697,7 @@ void cg::renderer::dx12_renderer::populate_command_list()
 			continue;
 		}
 
-		command_list->SetGraphicsRootDescriptorTable(1, cbv_srv_heap.get_gpu_descriptor_handle(UINT(s + 1)));
+		command_list->SetGraphicsRootDescriptorTable(1, cbv_srv_heap.get_gpu_descriptor_handle(UINT(s + 3)));
 		command_list->IASetVertexBuffers(0, 1, &vertex_buffer_views[s]);
 		command_list->IASetIndexBuffer(&index_buffer_views[s]);
 		command_list->DrawIndexedInstanced(
@@ -711,6 +711,11 @@ void cg::renderer::dx12_renderer::populate_command_list()
 			render_targets[frame_index].Get(),
 			D3D12_RESOURCE_STATE_RENDER_TARGET,
 			D3D12_RESOURCE_STATE_PRESENT
+		),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+			shadow_map.Get(),
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+			D3D12_RESOURCE_STATE_DEPTH_WRITE
 		)
 	};
 	command_list->ResourceBarrier(_countof(end_barriers), end_barriers);
