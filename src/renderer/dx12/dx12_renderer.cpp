@@ -28,6 +28,13 @@ void cg::renderer::dx12_renderer::init()
 	camera->set_z_near(settings->camera_z_near);
 	camera->set_z_far(settings->camera_z_far);
 
+	cb.light.color = float4 {1.0f, 0.8f, 0.3f, 1.0f};
+	cb.light.position = float4 {
+			settings->camera_position[0],
+			settings->camera_position[1] + 20.f,
+			settings->camera_position[2] - 5.f, 1
+	};
+
 	view_port = CD3DX12_VIEWPORT(0.0f, 0.0f, float(settings->width), float(settings->height));
 	scissor_rect = CD3DX12_RECT(0, 0, long(settings->width), long(settings->height));
 
