@@ -163,7 +163,7 @@ void cg::renderer::dx12_renderer::create_depth_buffer()
 	depth_clear_value.DepthStencil.Depth = 1.0f;
 	depth_clear_value.DepthStencil.Stencil = 0;
 
-	THROW_IF_FAILED(device->CreateCommitedResource(
+	THROW_IF_FAILED(device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
 		&depth_buffer_desc,
@@ -175,7 +175,7 @@ void cg::renderer::dx12_renderer::create_depth_buffer()
 	depth_buffer->SetName(L"Depth buffer");
 	dsv_heap.create_heap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	device->CreateDepthStencilView(
-		depth_buffer->Get(),
+		depth_buffer.Get(),
 		nullptr,
 		dsv_heap.get_cpu_descriptor_handle()
 	);
