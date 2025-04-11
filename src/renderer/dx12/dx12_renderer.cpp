@@ -221,7 +221,7 @@ D3D12_STATIC_SAMPLER_DESC cg::renderer::dx12_renderer::get_sampler_descriptor()
 	sampler_desc.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	sampler_desc.MaxLOD = D3D12_FLOAT32_MAX;
 	sampler_desc.MinLOD = 0;
-	sampler_desc.MinLODBias = 0;
+	sampler_desc.MipLODBias = 0;
 	sampler_desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	sampler_desc.MaxAnisotropy = 16;
 	sampler_desc.ShaderRegister = 0;
@@ -372,7 +372,7 @@ void cg::renderer::dx12_renderer::create_resource_on_upload_heap(ComPtr<ID3D12Re
 void cg::renderer::dx12_renderer::create_resource_on_default_heap(ComPtr<ID3D12Resource>& resource, UINT size, const std::wstring& name, D3D12_RESOURCE_DESC* resource_descriptor)
 {
 	if (resource_descriptor == nullptr) {
-		resource_descriptor = &CD3DX12_RESOURCE_DESC::Buffer(sizee);
+		resource_descriptor = &CD3DX12_RESOURCE_DESC::Buffer(size);
 	}
 	THROW_IF_FAILED(
 			device->CreateCommittedResource(
@@ -444,7 +444,7 @@ void cg::renderer::dx12_renderer::create_shader_resource_view(const ComPtr<ID3D1
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc {};
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE_2D;
+	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	desc.Texture2D.MipLevels = 1;
 
 	device->CreateShaderResourceView(texture.Get(), &desc, cpu_handler);
