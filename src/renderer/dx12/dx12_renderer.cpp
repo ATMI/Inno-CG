@@ -349,7 +349,7 @@ void cg::renderer::dx12_renderer::copy_data(const void* buffer_data, const UINT 
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			state_after
 		)
-	)
+	);
 }
 
 D3D12_VERTEX_BUFFER_VIEW cg::renderer::dx12_renderer::create_vertex_buffer_view(
@@ -411,7 +411,7 @@ void cg::renderer::dx12_renderer::load_assets()
 		vertex_buffer_name += std::to_wstring(i);
 
 		create_resource_on_default_heap(vertex_buffers[i], vertex_buffer_size, vertex_buffer_name);
-		create_resource_on_upload_head(upload_vertex_buffers[i], vertex_buffer_size);
+		create_resource_on_upload_heap(upload_vertex_buffers[i], vertex_buffer_size);
 		copy_data(vertex_buffer_data->get_data(), vertex_buffer_size, vertex_buffers[i], upload_vertex_buffers[i], D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 		vertex_buffer_views[i] = create_vertex_buffer_view(vertex_buffers[i], vertex_buffer_size);
