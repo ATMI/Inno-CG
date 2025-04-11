@@ -143,6 +143,42 @@ void cg::renderer::dx12_renderer::create_render_target_views()
 
 void cg::renderer::dx12_renderer::create_depth_buffer()
 {
+	CD3DX12_RESOURCE_DESC depth_buffer_desc(
+		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		0,
+		settings->width,
+		settings->height,
+		1,
+		1,
+		DXGI_FORMAT_D32_FLOAT,
+		1,
+		0,
+		D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
+		D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE
+	);
+
+	D3D12_CLEAR_VALUE depth_clear_value {};
+	depth_clear_value.Format = DXGI_FORMAT_D32_FLOAT;
+	depth_clear_value.DepthStencil.Depth = 1.0f;
+	depth_clear_value.DepthStencil.Stencil = 0;
+
+	THROW_IF_FAILED(device->CreateCommitedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&depth_buffer_desc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depth_clear_value,
+		IID_PPV_ARGS(&depth_buffer)
+	));
+
+	depth_buffer->SetName(L"Depth buffer");
+	dsv_heap.create_heap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	device->CreateDepthStencilView(
+		depth_buffer->Get(),
+		nullptr,
+		dsv_heap.get_cpu_descriptor_handle()
+	);
 }
 
 void cg::renderer::dx12_renderer::create_command_allocators()
@@ -173,6 +209,7 @@ void cg::renderer::dx12_renderer::load_pipeline()
 	create_direct_command_queue();
 	create_swap_chain(dxgi_factory);
 	create_render_target_views();
+	create_depth_buffer();
 }
 
 D3D12_STATIC_SAMPLER_DESC cg::renderer::dx12_renderer::get_sampler_descriptor()
@@ -282,12 +319,15 @@ void cg::renderer::dx12_renderer::create_pso()
 	desc.RasterizerState.FrontCounterClockwise = TRUE;
 	desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	desc.DepthStencilState.DepthEnable = FALSE;
+	desc.DepthStencilState.DepthEnable = TRUE;
+	desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	desc.DepthStencilState.StencilEnable = FALSE;
 	desc.SampleMask = UINT_MAX;
 	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	desc.NumRenderTargets = 1;
 	desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	desc.SampleDesc.Count = 1;
 
 	THROW_IF_FAILED(device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pipeline_state)));
@@ -477,9 +517,10 @@ void cg::renderer::dx12_renderer::populate_command_list()
 	};
 	command_list->ResourceBarrier(_countof(begin_barriers), begin_barriers);
 
-	command_list->OMSetRenderTargets(1, &rtv_heap.get_cpu_descriptor_handle(frame_index), FALSE, nullptr);
+	command_list->OMSetRenderTargets(1, &rtv_heap.get_cpu_descriptor_handle(frame_index), FALSE, &dsv_heap.get_cpu_descriptor_handle());
 	const float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	command_list->ClearRenderTargetView(rtv_heap.get_cpu_descriptor_handle(frame_index), clear_color, 0, nullptr);
+	command_list->ClearDepthStencilView(dsv_heap.get_cpu_descriptor_handle(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	
 	for (size_t s = 0; s < model->get_vertex_buffers().size(); ++s) {
 		command_list->IASetVertexBuffers(0, 1, &vertex_buffer_views[s]);
